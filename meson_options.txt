@@ -1,0 +1,3 @@
+option('target', type : 'combo', choices : ['glcore33', 'd3d11', 'gles2', 'gles3', 'metal', 'wgpu'],
+    value : 'glcore33', description: '3D API to target'
+)
