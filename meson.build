@@ -6,7 +6,6 @@ project('sokol', 'c', default_options : ['c_std=c99', 'c_winlibs=[]'])
 sokol_target = get_option('target')
 sokol_impl_def = '-DSOKOL_' + sokol_target.to_upper()
 sokol_c_args = [ sokol_impl_def ]
-sokol_link_args = [ ]
 
 cc = meson.get_compiler('c')
 
@@ -26,11 +25,17 @@ elif host_machine.system() == 'linux'
     sokol_gfx_impl = 'impl/sokol_gfx.c'
 elif host_machine.system() == 'darwin'
     add_languages('objc')
-    sokol_rt_libs = [ ]
-    sokol_3d_libs = [ dependency('appleframeworks', modules : ['metal']) ]
-    sokol_app_libs = [ dependency('appleframeworks', modules : ['metal', 'metalkit', 'cocoa', 'quartzcore']) ]
-    sokol_gfx_impl = 'impl/sokol_gfx.m'
-    sokol_link_args += ['-framework', 'CoreServices', '-framework', 'Foundation', '-framework', 'Metal']
+    if sokol_target == 'metal'
+        sokol_rt_libs = [ dependency('appleframeworks', modules : ['coreservices', 'foundation']) ]
+        sokol_3d_libs = [ dependency('appleframeworks', modules : ['metal']) ]
+        sokol_app_libs = [ dependency('appleframeworks', modules : ['metal', 'metalkit', 'cocoa', 'quartzcore']) ]
+        sokol_gfx_impl = 'impl/sokol_gfx.m'
+    else
+        sokol_rt_libs = [ ]
+        sokol_3d_libs = [ dependency('opengl') ]
+        sokol_app_libs = [ dependency('appleframeworks', modules : ['cocoa', 'quartzcore']) ]
+        sokol_gfx_impl = 'impl/sokol_gfx.c'
+    endif
 endif
 
 if get_option('default_library') != 'static'
@@ -45,7 +50,6 @@ if get_option('gfx')
     libsokol_gfx = library('libsokol-gfx', sokol_gfx_impl,
         objc_args : sokol_c_args,
         c_args : sokol_c_args,
-        link_args : sokol_link_args,
         dependencies : sokol_gfx_deps,
         install : true,
     )
@@ -73,7 +77,6 @@ if get_option('app')
     libsokol_app = library('libsokol-app', sokol_app_impl,
         objc_args : sokol_c_args,
         c_args : sokol_c_args,
-        link_args : sokol_link_args,
         dependencies : sokol_app_deps,
         install : true,
     )
